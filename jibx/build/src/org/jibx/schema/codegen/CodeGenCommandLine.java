@@ -87,6 +87,8 @@ public class CodeGenCommandLine extends CustomizationCommandLineBase
     
     /** File for checking differences in generated class structure (<code>null</code> if none). */
     private File m_differenceFile;
+
+    private File m_mappingFile;
     
     /** Customizations model root. */
     private SchemasetCustom m_customRoot;
@@ -174,6 +176,14 @@ public class CodeGenCommandLine extends CustomizationCommandLineBase
         return m_differenceFile;
     }
     
+    public File getMappingFile(){
+    	return m_mappingFile;
+    }
+
+    public void setMappingFile(File m_mappingFile){
+    	this.m_mappingFile = m_mappingFile;
+    }
+
     /**
      * Get the list of paths for bindings to be used for matching schema definitions.
      *
@@ -204,6 +214,8 @@ public class CodeGenCommandLine extends CustomizationCommandLineBase
                 base = split + 1;
             }
             m_includePaths.add(text.substring(base));
+        } else if ("-m".equalsIgnoreCase( arg )){
+            m_mappingFile = new File(alist.next());        
         } else if ("-m".equalsIgnoreCase(arg)) {
             m_modelFile = new File(alist.next());
         } else if ("-n".equalsIgnoreCase(arg)) {
@@ -214,7 +226,7 @@ public class CodeGenCommandLine extends CustomizationCommandLineBase
             m_rootPath = alist.next();
         } else if ("-u".equalsIgnoreCase(arg)) {
             m_usingNamespace = alist.next();
-        } else {
+	} else {
             match = super.checkParameter(alist);
         }
         return match;

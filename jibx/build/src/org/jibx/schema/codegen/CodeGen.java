@@ -278,7 +278,7 @@ public class CodeGen
      * @param handler validation problem handler
      * @return <code>true</code> if successful, <code>false</code> if error
      */
-    public boolean customizeSchemas(String pack, ProblemHandler handler) {
+    public boolean customizeSchemas(String pack, ProblemHandler handler, Map nsMapping) {
         
         // TODO: remove this once list and union handling fully implemented
         SchemaVisitor visitor = new SchemaVisitor() {
@@ -354,6 +354,7 @@ public class CodeGen
             dfltpack = pack;
         }
         m_packageDirectory = new PackageOrganizer(m_targetDir, dfltpack);
+        m_packageDirectory.setNSPackageMap( nsMapping );
         
         // link each schema to a customization, creating a default customization if necessary
         int count = 0;
@@ -1704,7 +1705,7 @@ public class CodeGen
      * @throws IOException
      */
     public boolean generate(boolean verbose, String usens, String dfltpkg, String bindname, List fileset,
-        List inclpaths, File model, ProblemHandler handler) throws JiBXException, IOException {
+        List inclpaths, File model, ProblemHandler handler, Map nsMapping) throws JiBXException, IOException {
         
         // load the full set of schemas
         SchemaElement[] schemas = ValidationUtils.load(fileset, usens, m_validationContext);
@@ -1712,7 +1713,7 @@ public class CodeGen
             if (dfltpkg == null) {
                 dfltpkg = "dflt";
             }
-            if (customizeSchemas(dfltpkg, handler)) {
+            if (customizeSchemas(dfltpkg, handler, nsMapping)) {
                 
                 // report on schemas loaded
                 StringBuffer buff = new StringBuffer();
@@ -2203,8 +2204,11 @@ public class CodeGen
             handler.addHandler(new ProblemLogLister(s_logger));
             CodeGen inst = new CodeGen(parms.getCustomRoot(), parms.getSchemaRoot(),
                 parms.getGeneratePath());
+            Map nsMapping = null;
+            if ( parms.getMappingFile() != null )
+                nsMapping = readNSMapping( parms.getMappingFile() );
             inst.generate(parms.isVerbose(), parms.getUsingNamespace(), parms.getNonamespacePackage(),
-                parms.getBindingName(), fileset.asList(), parms.getIncludePaths(), parms.getModelFile(), handler);
+                parms.getBindingName(), fileset.asList(), parms.getIncludePaths(), parms.getModelFile(), handler, nsMapping);
             
         } else {
             if (args.length > 0) {
@@ -2214,6 +2218,34 @@ public class CodeGen
             }
             System.exit(1);
         }
+
+    }
+
+    private static Map readNSMapping(File file) throws IOException
+    {
+        if ( file != null && file.exists() && !file.isDirectory() )
+        {
+            BufferedReader r = new BufferedReader( new FileReader( file ) );
+            try
+            {
+                Map nsMap = new HashMap();
+                while ( true )
+                {
+                    String line = r.readLine();
+                    if ( line == null )
+                        break;
+                    String[] pair = line.split( "=" );
+                    if ( pair.length > 1 )
+                        nsMap.put( pair[0].trim(), pair[1].trim() );
+                }
+                return nsMap;
+            }
+            finally
+            {
+                r.close();
+            }
+        }
+        return null;
     }
 
     /**
